@@ -1,0 +1,487 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load user_tags %}
+{% load contratos_tags %}
+{% block page_title %}Inicio{% endblock %}
+{% block styles %}
+.text-name {
+  margin-bottom: 0em;
+  font-weight: bold;
+}
+{% endblock %}
+{% block content %}
+<!-- begin breadcrumb -->
+<ol class="breadcrumb pull-right">
+  <li class="breadcrumb-item active"><a href="javascript:;">Inicio</a></li>
+</ol>
+<!-- end breadcrumb -->
+<!-- begin page-header -->
+<h1 class="page-header">Inicio <small>Mis Documentos</small></h1>
+<!-- end page-header -->
+<div class="row">
+  <div class="col-lg-12 ui-sortable">
+    <div class="panel panel-inverse" data-sortable-id="index-1">
+      <div class="panel-heading">
+        <div class="panel-heading-btn">
+          <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-default" data-click="panel-expand"><i class="fa fa-expand"></i></a>
+          <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-success" data-click="panel-reload"><i class="fa fa-redo"></i></a>
+          <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-warning" data-click="panel-collapse"><i class="fa fa-minus"></i></a>
+          <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-danger" data-click="panel-remove"><i class="fa fa-times"></i></a>
+        </div>
+        <h4 class="panel-title">Contratos</h4>
+      </div>
+      <div class="panel-body">
+        <div class="table-responsive">
+          <table class="table table-valign-middle">
+          <thead>
+            <tr>
+              <th class="text-center" width="5%">#</th>
+              <th class="text-center" width="20%">Administrador de Contrato</th>
+              <th class="text-center" width="20%">Planta</th>
+              <th class="text-center" width="20%">Contratos por firmar trabajador</th>
+              <th class="text-center" width="20%">Contratos por firmar Administrador de Contrato</th>
+              <th class="text-center" width="15%"><strike>Actualizado</strike></th>
+            </tr>
+            </thead>
+            <tbody>
+              {% for obj in contratos  %}
+              <tr>
+                <td class="text-right">{{ forloop.counter }}.</td>
+                <td>
+                  {% for usr in administradorc  %}
+                  {{ usr.first_name|title }} {{ usr.last_name|title }}
+                  {% endfor %}
+                </td>
+                <td class="text-center">
+                  {{ obj.usuario.planta.first }}
+                </td>
+                <td class="text-center">
+                  {{ firmartrab }}
+                </td>
+                <td class="text-center">
+                  {{ obj.estado|estado_contrato|safe }}
+                </td>
+                <td>
+                   <p class="text-center">
+                    <strike>{{ obj.modified|date:'d/M/Y' }}</strike> <br>
+                   </p>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="5">
+                <div class="text-center">No hay contratos por firmar.</div>
+              </td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6 offset-md-6 ui-sortable">
+    <div class="panel panel-inverse" data-sortable-id="index-2">
+      <div class="panel-heading">
+        <div class="panel-heading-btn">
+          <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-default" data-click="panel-expand"><i class="fa fa-expand"></i></a>
+          <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-success" data-click="panel-reload"><i class="fa fa-redo"></i></a>
+          <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-warning" data-click="panel-collapse"><i class="fa fa-minus"></i></a>
+          <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-danger" data-click="panel-remove"><i class="fa fa-times"></i></a>
+        </div>
+        <h4 class="panel-title">Ficheros Digitales</h4>
+      </div>
+      <div class="panel-body">
+        <div class="table-responsive">
+								<table class="table table-valign-middle">
+									<thead>
+										<tr>
+											<th>Fichero</th>
+											<th>Publicado</th>
+										</tr>
+									</thead>
+									<tbody>
+                  {% for f in ficheros %}
+										<tr>
+											<td><a href="#!"
+                             class="text-success btn-view-fichero"
+                             data-id="{{ f.id }}">{{ f.nombre }}</a></td>
+											<td><span class="text-success"><i class="fas fa-clock"></i></span>
+                        {{ f.modified|date:"d/M/Y" }}
+                      </td>
+										</tr>
+                    {% empty %}
+                    <tr><td colspan="2">
+                      <div class="text-center">No hay ficheros digitales publicados</div>
+                    </td></tr>
+                  {% endfor %}
+									</tbody>
+								</table>
+							</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modal-fichero">
+  <div class="modal-dialog">
+    <div class="modal-content"></div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+      $('.btn-view-fichero').on('click', function(e){
+        e.preventDefault();
+        var id = $(this).data('id');
+        console.log('fichero_id', 'id');
+        var URL = '/ficheros/'+id+'/detail/';
+
+        console.log('URL', URL);
+
+        $.ajax({
+              url: URL,
+              type: 'get',
+              dataType: 'json',
+              beforeSend: function () {
+                $("#modal-fichero").modal("show");
+              },
+              success: function (data) {
+                  $("#modal-fichero .modal-content").html(data.html_form);
+              }
+            });
+    });
+    {% if messages %}
+        console.log('mensajes');
+        {% for mensaje in messages %}
+            console.log("{{ mensaje.tags}}"+" "+"{{ mensaje }}");
+            {% if mensaje.tags == 'success' %}
+              iziToast.success({
+                  message: '{{ mensaje }}',
+                  position: 'topRight',
+              });
+            {% elif mensaje.tags == 'error' %}
+              iziToast.error({
+                  message: '{{ mensaje }}',
+                  position: 'topRight',
+              });
+            {% endif %}
+        {% endfor %}
+
+    {% endif %}
+{% endblock %}
+
+
+
+
+*******------++++++*******------++++++*******------++++++
+
+"""Users Forms"""
+
+# Django
+from django import forms
+from django.forms import inlineformset_factory, RadioSelect
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import get_user_model
+from django.forms import TextInput
+from django.contrib.auth.models import Group
+# Firmatec Model
+from utils.models import Cliente, Planta, Region, Provincia, Ciudad
+from users.models import Civil, SistemaSalud, SistemaPrevision, TipoCta
+
+User = get_user_model()
+
+
+class CrearUsuarioForm(forms.ModelForm):
+
+    email = forms.EmailField(required=True,
+                             widget=forms.EmailInput(attrs={'class': "form-control-lg"}))
+    first_name = forms.CharField(required=True, label="Nombres",
+                                 widget=forms.TextInput(attrs={'class': "form-control-lg"}))
+    last_name = forms.CharField(required=True, label="Apellidos",
+                                widget=forms.TextInput(attrs={'class': "form-control-lg"}))
+    fecha_nacimiento = forms.DateField(required=True, input_formats=["%d/%m/%Y"], label="Fecha de Nacimiento",
+                                widget=forms.TextInput(attrs={'placeholder': 'DD/MM/AAAA','class': "form-control-lg",}))
+    estado_civil = forms.ModelChoiceField(queryset=Civil.objects.all(), required=True, label="Estado Civil",
+                                   widget=forms.Select(attrs={'class': 'selectpicker show-tick form-control-lg',
+                                                              'data-size': '5',
+                                                              'data-live-search': 'true',
+                                                              'data-live-search-normalize': 'true'
+                                                              })
+                                   )
+    sistema_salud = forms.ModelChoiceField(queryset=SistemaSalud.objects.all(), required=True, label="Sistema Salud",
+                                   widget=forms.Select(attrs={'class': 'selectpicker show-tick form-control-lg',
+                                                              'data-size': '5',
+                                                              'data-live-search': 'true',
+                                                              'data-live-search-normalize': 'true'
+                                                              })
+                                   )
+    sistema_prevision = forms.ModelChoiceField(queryset=SistemaPrevision.objects.all(), required=True, label="Sistema Prevision",
+                                   widget=forms.Select(attrs={'class': 'selectpicker show-tick form-control-lg',
+                                                              'data-size': '5',
+                                                              'data-live-search': 'true',
+                                                              'data-live-search-normalize': 'true'
+                                                              })
+                                   )
+    tipo_cuenta = forms.ModelChoiceField(queryset=TipoCta.objects.all(), required=True, label="Tipo Cuenta",
+                                   widget=forms.Select(attrs={'class': 'selectpicker show-tick form-control-lg',
+                                                              'data-size': '5',
+                                                              'data-live-search': 'true',
+                                                              'data-live-search-normalize': 'true'
+                                                              })
+                                   )
+    cuenta = forms.CharField(required=True, label="Número de Cuenta",
+                                widget=forms.TextInput(attrs={'class': "form-control-lg"}))
+    group = forms.ModelChoiceField(queryset=Group.objects.none(), required=True, label="Perfil",
+                                   widget=forms.Select(attrs={'class': 'selectpicker show-tick form-control-lg',
+                                                              'data-size': '5',
+                                                              'data-live-search': 'true',
+                                                              'data-live-search-normalize': 'true'
+                                                              })
+                                   )
+    # cliente = forms.ModelChoiceField(queryset=Cliente.objects.all(), required=True, label="Cliente",
+    #                                  widget=forms.Select(attrs={'class': 'form-control-lg selectpicker show-tick',
+    #                                                           'data-size': '5',
+    #                                                           'data-live-search': 'true',
+    #                                                           'data-live-search-normalize': 'true'
+    #                                                           })
+    #                                )
+    # planta = forms.ModelMultipleChoiceField(queryset=Planta.objects.none(), required=True, label="Planta",
+    #                                         widget=forms.SelectMultiple(attrs={'class': 'form-control-lg selectpicker show-tick',
+    #                                                    'data-size': '5',
+    #                                                    'data-live-search': 'true',
+    #                                                    'data-live-search-normalize': 'true'
+    #                                                    })
+    #                                         )
+
+    rut = forms.CharField(required=True, label="RUT",
+                          widget=forms.TextInput(attrs={'class': "form-control-lg",
+                          'onkeypress': "return isNumber(event)",
+                          'oninput': "checkRut(this)",
+                          'title': "El RUT debe ser ingresado sin puntos ni guiones.",
+                          'placeholder': '987654321',}))
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super(CrearUsuarioForm, self).__init__(*args, **kwargs)
+
+        self.fields['provincia'].queryset = Provincia.objects.none()
+
+        
+
+        if 'region' in self.data:
+            try:
+                region_id = int(self.data.get('region'))
+                self.fields['provincia'].queryset = Provincia.objects.filter(region_id=region_id).order_by('nombre')
+            except (ValueError, TypeError):
+                pass  # invalid input from the client; ignore and fallback to empty Provincia queryset
+        elif self.instance.pk:
+            self.fields['provincia'].queryset = self.instance.region.provincia_set.order_by('nombre')
+
+        self.fields['ciudad'].queryset = Provincia.objects.none()
+        if 'provincia' in self.data:
+            try:
+                provincia_id = int(self.data.get('provincia'))
+                self.fields['ciudad'].queryset = Ciudad.objects.filter(provincia_id=provincia_id).order_by('nombre')
+            except (ValueError, TypeError):
+                pass  # invalid input from the client; ignore and fallback to empty Provincia queryset
+        elif self.instance.pk:
+            self.fields['ciudad'].queryset = self.instance.region.provincia.ciudad_set.order_by('nombre')
+            #self.fields['ciudad'].queryset = self.instance.provincia.ciudad_set.order_by('nombre')
+        if not user.groups.filter(name='Administrador').exists():
+            self.fields['group'].queryset = Group.objects.exclude(name__in=['Administrador', ])
+            self.fields['cliente'].queryset = Cliente.objects.filter(id__in=user.cliente.all())
+            cliente_id = int(self.data.get('cliente'))
+            self.fields['planta'].queryset = Planta.objects.filter(cliente_id=cliente_id).order_by('nombre')
+        else:
+            self.fields['group'].queryset = Group.objects.all()
+            self.fields['cliente'].queryset = Cliente.objects.all()
+            # self.fields['planta'].queryset = Planta.objects.all()
+            self.fields['planta'].queryset = Planta.objects.none()
+
+        
+
+        if 'cliente' in self.data:
+            try:
+                cliente_id = int(self.data.get('cliente'))
+                self.fields['planta'].queryset = Planta.objects.filter(cliente_id=cliente_id).order_by('nombre')
+            except (ValueError, TypeError):
+                pass  # invalid input from the client; ignore and fallback to empty planta queryset
+        elif self.instance.pk:
+            self.fields['planta'].queryset = self.instance.cliente.planta_set.order_by('nombre')
+            # self.fields['planta'].queryset = Planta.objects.select_related('cliente')
+
+
+    class Meta:
+        model = User
+        fields = ("group", "rut", "first_name", "last_name", "sexo", "email", "telefono", "estado_civil", "fecha_nacimiento", 
+                  "nacionalidad", "region", "provincia", "ciudad", "domicilio", "sistema_salud", "sistema_prevision",
+                  "banco", "tipo_cuenta", "cuenta", "cliente", "planta", "is_active", )
+        widgets = {
+            'telefono': TextInput(attrs={
+                'class': "form-control-lg",
+                'type': "number",
+                'placeholder': '56912345678'
+                }),
+            'cuenta': TextInput(attrs={
+                'class': "form-control-lg",
+                'type': "number"
+                }),
+            # 'planta': forms.SelectMultiple(attrs={
+            #     'class': "selectpicker show-tick form-control-lg",
+            #     'required' :True,
+            #     'label': 'Planta'
+            #     }),
+        }
+        exclude = ('password1', 'password2')
+
+
+class EditarUsuarioForm(forms.ModelForm):
+    email = forms.EmailField(required=True,
+                             widget=forms.EmailInput(attrs={'class': "form-control-lg"}))
+    first_name = forms.CharField(required=True, label="Nombres",
+                                 widget=forms.TextInput(attrs={'class': "form-control-lg"}))
+    last_name = forms.CharField(required=True, label="Apellidos",
+                                widget=forms.TextInput(attrs={'class': "form-control-lg"}))
+    fecha_nacimiento = forms.DateField(required=True, input_formats=["%d-%m-%Y"], label="Fecha de Nacimiento",
+                                widget=forms.TextInput(attrs={'placeholder': 'DD-MM-AAAA','class': "form-control-lg"}))
+    estado_civil = forms.ModelChoiceField(queryset=Civil.objects.all(), required=True, label="Estado Civil",
+                                   widget=forms.Select(attrs={'class': 'selectpicker show-tick form-control-lg',
+                                                              'data-size': '5',
+                                                              'data-live-search': 'true',
+                                                              'data-live-search-normalize': 'true'
+                                                              })
+                                   )
+    sistema_salud = forms.ModelChoiceField(queryset=SistemaSalud.objects.all(), required=True, label="Sistema Salud",
+                                   widget=forms.Select(attrs={'class': 'selectpicker show-tick form-control-lg',
+                                                              'data-size': '5',
+                                                              'data-live-search': 'true',
+                                                              'data-live-search-normalize': 'true'
+                                                              })
+                                   )
+    sistema_prevision = forms.ModelChoiceField(queryset=SistemaPrevision.objects.all(), required=True, label="Sistema Prevision",
+                                   widget=forms.Select(attrs={'class': 'selectpicker show-tick form-control-lg',
+                                                              'data-size': '5',
+                                                              'data-live-search': 'true',
+                                                              'data-live-search-normalize': 'true'
+                                                              })
+                                   )
+    tipo_cuenta = forms.ModelChoiceField(queryset=TipoCta.objects.all(), required=True, label="Tipo Cuenta",
+                                   widget=forms.Select(attrs={'class': 'selectpicker show-tick form-control-lg',
+                                                              'data-size': '5',
+                                                              'data-live-search': 'true',
+                                                              'data-live-search-normalize': 'true'
+                                                              })
+                                   )
+    cuenta = forms.CharField(required=True, label="Número de Cuenta",
+                                widget=forms.TextInput(attrs={'class': "form-control-lg"}))
+    group = forms.ModelChoiceField(queryset=Group.objects.none(), required=True, label="Perfil",
+                                   widget=forms.Select(attrs={'class': 'selectpicker show-tick form-control-lg',
+                                                              'data-size': '5',
+                                                              'data-live-search': 'true',
+                                                              'data-live-search-normalize': 'true'
+                                                              })
+                                   )
+    # planta = forms.ModelMultipleChoiceField(queryset=Planta.objects.none(), required=True, label="Planta",
+    #                                         widget=forms.SelectMultiple(
+    #                                             attrs={'class': 'selectpicker show-tick form-control-lg',
+    #                                                    'data-size': '5',
+    #                                                    'data-live-search': 'true',
+    #                                                    'data-live-search-normalize': 'true'
+    #                                                    })
+    #                                         )
+    rut = forms.CharField(required=True, label="RUT",
+                          widget=forms.TextInput(attrs={'class': "form-control-lg"}))
+
+        
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super(EditarUsuarioForm, self).__init__(*args, **kwargs)
+
+        self.fields['provincia'].queryset = Provincia.objects.none()
+
+        
+
+        if 'region' in self.data:
+            try:
+                region_id = int(self.data.get('region'))
+                self.fields['provincia'].queryset = Provincia.objects.filter(region_id=region_id).order_by('nombre')
+            except (ValueError, TypeError):
+                pass  # invalid input from the client; ignore and fallback to empty Provincia queryset
+        elif self.instance.pk:
+            self.fields['provincia'].queryset = self.instance.region.provincia_set.order_by('nombre')
+
+        self.fields['ciudad'].queryset = Provincia.objects.none()
+        if 'provincia' in self.data:
+            try:
+                provincia_id = int(self.data.get('provincia'))
+                self.fields['ciudad'].queryset = Ciudad.objects.filter(provincia_id=provincia_id).order_by('nombre')
+            except (ValueError, TypeError):
+                pass  # invalid input from the client; ignore and fallback to empty Provincia queryset
+        elif self.instance.pk:
+            # self.fields['ciudad'].queryset = self.instance.region.provincia.ciudad_set.order_by('nombre')
+            self.fields['ciudad'].queryset = self.instance.provincia.ciudad_set.order_by('nombre')
+        if not user.groups.filter(name__in=['Administrador', 'Administrador Contratos', ]).exists():
+            self.fields['group'].queryset = Group.objects.exclude(name__in=['Administrador', ])
+            self.fields['cliente'].queryset = Cliente.objects.filter(id__in=user.cliente.all())
+            cliente_id = int(self.data.get('cliente'))
+            self.fields['planta'].queryset = Planta.objects.filter(cliente_id=cliente_id).order_by('nombre')
+        else:
+            self.fields['group'].queryset = Group.objects.all()
+            self.fields['cliente'].queryset = Cliente.objects.all()
+            self.fields['planta'].queryset = Planta.objects.none()
+
+        
+
+        if 'cliente' in self.data:
+            try:
+                cliente_id = int(self.data.get('cliente'))
+                self.fields['planta'].queryset = Planta.objects.filter(cliente_id=cliente_id).order_by('nombre')
+            except (ValueError, TypeError):
+                pass  # invalid input from the client; ignore and fallback to empty planta queryset
+        elif self.instance.pk:
+            self.fields['planta'].queryset = self.instance.cliente.planta_set.order_by('nombre')
+
+ 
+    class Meta:
+        model = User
+        fields = ("group", "rut", "first_name", "last_name", "sexo", "email", "telefono", "estado_civil", "fecha_nacimiento", 
+                  "nacionalidad", "region", "provincia", "ciudad", "domicilio", "sistema_salud", "sistema_prevision",
+                  "banco", "tipo_cuenta", "cuenta", "cliente", "planta", "is_active", )
+        widgets = {
+            'telefono': TextInput(attrs={
+                'class': "form-control-lg",
+                'type': "number",
+                'placeholder': '56912345678'
+                }),
+            'cuenta': TextInput(attrs={
+                'class': "form-control-lg",
+                'type': "number"
+                }),
+        }
+
+
+        ***********-----+++++++*********-------++++++++*************-------++++++++
+        {{ obj }}                
+        {'created_by_id': 1, 'count': 1} +**
+{{ result }}
+        <QuerySet [{'created_by_id': 1, 'count': 1}, 
+        {'created_by_id': 1, 'count': 2}, 
+        {'created_by_id': 3, 'count': 1}, 
+        {'created_by_id': 3, 'count': 1}]>- **
+{{ contratos }}
+        <QuerySet [<Contrato: 25.923.052-7-0005>, 
+        <Contrato: 15.855.492-5-0004>, 
+        <Contrato: 27.100.263-7-0003>, 
+        <Contrato: 171993911-0002>, 
+        <Contrato: 87654321-0001>]>
+
+{{ obj }} +{{ result }}- {{ contratos }}
+
+archivado, created, created_by, created_by_id, documentoscontrato, estado, id, modified, modified_by, modified_by_id, obs, usuario, usuario_id
+
+
+    context['result'] = Contrato.objects.filter(
+        usuario__planta__in=plantas, estado=Contrato.POR_FIRMAR).values(
+        'created_by_id').order_by('usuario__planta').annotate(count=Count('usuario__planta'))
